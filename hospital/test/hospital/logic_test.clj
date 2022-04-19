@@ -14,8 +14,13 @@
   (testing "Que cabe numa vila fazia"
     (is (cabe-na-fila? {:espera []} :espera)))
 
-  (testing "Que não cabe na fila quando a fila está cheia"
-    (is (not (cabe-na-fila? {:espera [1 5 37 54 21]}, :espera))))
+  (testing "Que cabe pessoas em filas de tamanhao ate 4 inclusive"
+    (doseq [fila (gen/sample (gen/vector gen/string-alphanumeric 0 4) 1000)]
+      (is (cabe-na-fila? {:espera fila}, :espera))))
+
+
+    (testing "Que não cabe na fila quando a fila está cheia"
+      (is (not (cabe-na-fila? {:espera [1 5 37 54 21]}, :espera))))
 
   ; one off da borda do limite pra cima
   (testing "Que não cabe na fila quando tem mais do que uma fila cheia"
@@ -28,6 +33,8 @@
 
   (testing "Que não cabe quando o departamento não existe"
     (is (not (cabe-na-fila? {:espera [1 2 3 4]}, :raio-x)))))
+
+
 
 
 

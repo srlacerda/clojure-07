@@ -84,17 +84,49 @@
     transforma-vetor-em-fila
     (gen/vector nome-aleatorio 0 4)))
 
+; abordagem razoavel porem horrivel, uma vez que usamos o tipo e o tipo do tipo
+; para fazer um cond e pegar a exception que queremos
+; uma alternativa seria usar bibliotecas como a catch-data
+; LOG AND REHTROW é ruim. pq? pq se vc pegou, eh pq vc queria tratar
+; pq se vc pegou se vc SABIA que nao ia tratar?
+; a resposta? pq a linguagem nos forcou a jogar ex-info. nao eh que nos forcou
+; mas todas as pessoas do mundo usam ex-info, entao nos forcou...
+;(defn transfere-ignorando-erro [hospital para]
+;  (try
+;    (transfere hospital :espera para)
+;    (catch clojure.lang.ExceptionInfo e
+;      (cond
+;        (= :fila-cheia (:type (ex-data e))) hospital
+;        :else (throw e)
+;        )
+;      ;(println "falhou" (= :schema.core/error (:type (ex-data e))))
+;      ;hospital
+;      )))
+
+;abordagem mais interessante pois evita long and retrhow
+; mas perde o "poder"de ex-info (ExceptionInfo)
+; e ainda tem o problema de que outras partes do meu codigo ou
+; do codigo de outras pessoas pode jogar IllegalStateException
+; e eu estou confundindo isso com fila cheia
+; para resolver isso, so criando minha propria exception
+; mas ai caio no boom de exceptions no sistema (tenho q criar varios tipos)
+; OU criar variacoes de tipos como fizemos no ex-info
+; eu, guilherme, sou fã de criar muitos tipos de exceptions
+; mas entendendo que a comunidade não é fã
+; tem também todos os outros caminhos que discutimos no curso que onde falamos
+; sobre tratamento de erro
 (defn transfere-ignorando-erro [hospital para]
   (try
     (transfere hospital :espera para)
-    (catch clojure.lang.ExceptionInfo e
-      ;(println "falhou" e)
+    (catch IllegalStateException e
       hospital
       )))
 
+
 (defspec transfere-tem-que-manter-a-quantidade-de-pessoas 50
          (prop/for-all
-           [espera (gen/fmap transforma-vetor-em-fila (gen/vector nome-aleatorio 0 50))
+           [                                                ;espera gen/string-alphanumeric
+            espera (gen/fmap transforma-vetor-em-fila (gen/vector nome-aleatorio 0 50))
             raio-x fila-nao-cheia-gen
             ultrasom fila-nao-cheia-gen
             vai-para (gen/vector (gen/elements [:raio-x :ultrasom]) 0 50)
@@ -102,7 +134,6 @@
            ;(println (count espera)(count vai-para) vai-para)
            (let [hospital-inicial {:espera espera, :raio-x raio-x, :ultrasom ultrasom}
                  hospital-final (reduce transfere-ignorando-erro hospital-inicial  vai-para)]
-             ;(println (count (get hospital-final :raio-x)))
              (= (total-de-pacientes hospital-inicial)
                 (total-de-pacientes hospital-final))
              )

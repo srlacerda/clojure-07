@@ -11,19 +11,11 @@
           count
           (< 5)))
 
-;(defn chega-em
-;  [hospital departamento pessoa]
-;  (if (cabe-na-fila? hospital departamento)
-;    (update hospital departamento conj pessoa)
-;    (throw (ex-info "Não cabe ninguém neste departamento."
-;                    {:type :fila-cheia
-;                     :paciente pessoa}))))
-
 (defn chega-em
   [hospital departamento pessoa]
   (if (cabe-na-fila? hospital departamento)
     (update hospital departamento conj pessoa)
-    (throw (java.lang.IllegalStateException. "Não cabe ninguém neste departamento."))))
+    (throw (java.lang.IllegalStateException. "Não cabe ninguém neste departamento"))))
 
 (s/defn atende :- h.model/Hospital
         [hospital :- h.model/Hospital, departamento :- s/Keyword]
@@ -38,16 +30,13 @@
 
 (defn mesmo-tamanho? [hospital, outro-hospital, de para]
   (= (+ (count (get outro-hospital de)) (count (get outro-hospital para)))
-     (+ (count (get hospital de)) (count (get hospital para))))
-  )
+     (+ (count (get hospital de)) (count (get hospital para)))))
 
 (s/defn transfere :- h.model/Hospital
         "Transfere o proximo paciente da fila de para a fila para"
         [hospital :- h.model/Hospital, de :- s/Keyword, para :- s/Keyword]
-        {
-         :pre [(contains? hospital de), (contains? hospital para)]
-         :post [(mesmo-tamanho? hospital % de para)]
-         }
+        {:pre [(contains? hospital de), (contains? hospital para)]
+         :post [(mesmo-tamanho? hospital % de para)]}
         (if-let [pessoa (proxima hospital de)]
           (-> hospital
               (atende de)
